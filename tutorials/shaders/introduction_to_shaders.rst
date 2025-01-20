@@ -40,7 +40,8 @@ look like this.
 
 .. note::
 
-   The graphics card calls the ``fragment()`` function once or more for each pixel it has to draw. More on that below.
+   The graphics card calls the ``fragment()`` function once or more for each
+   pixel it has to draw. More on that below.
 
 Shaders in Godot
 ----------------
@@ -49,18 +50,39 @@ Godot provides a shading language based on the popular OpenGL Shading Language
 (GLSL) but simplified. The engine handles some of the lower-level initialization
 work for you, making it easier to write complex shaders.
 
-In Godot, shaders are made up of three main functions: ``vertex()``,
-``fragment()``, and ``light()``.
+In Godot, shaders are made up of main functions called "processor functions".
+Processor functions are the entry point for your shader into the program. There
+are seven different processor functions.
 
 1. The ``vertex()`` function runs over all the vertices in the mesh and sets
-   their positions and some other per-vertex variables.
+   their positions and some other per-vertex variables. Used in
+   :ref:`canvas_item shaders <doc_canvas_item_shader>` and
+   :ref:`spatial shaders <doc_spatial_shader>`.
 
 2. The ``fragment()`` function runs for every pixel covered by the mesh. It uses
    values output by the ``vertex()`` function, interpolated between the
-   vertices.
+   vertices. Used in :ref:`canvas_item shaders <doc_canvas_item_shader>` and
+   :ref:`spatial shaders <doc_spatial_shader>`.
 
 3. The ``light()`` function runs for every pixel and for every light. It takes
-   variables from the ``fragment()`` function and from its previous runs.
+   variables from the ``fragment()`` function and from its previous runs. Used
+   in :ref:`canvas_item shaders <doc_canvas_item_shader>` and
+   :ref:`spatial shaders <doc_spatial_shader>`.
+
+4. The ``start()`` function runs for every particle in a particle system once
+   when the particle is first spawned. Used in
+   :ref:`particles shaders <doc_particle_shader>`.
+
+5. The ``process()`` function runs for every particle in a particle system for
+   each frame. Used in :ref:`particles shaders <doc_particle_shader>`.
+
+6. The ``sky()`` function runs for every pixel in the radiance cubemap when the
+   radiance cubemap needs to be updated, and for every pixel on the current
+   screen. Used in :ref:`sky shaders <doc_sky_shader>`.
+
+7. The ``fog()`` function runs for every froxel in the volumetric fog froxel
+   buffer that intersects with the :ref:`FogVolume <class_FogVolume>`. Used by
+   :ref:`fog shaders <doc_fog_shader>`.
 
 .. warning::
 
@@ -69,12 +91,18 @@ In Godot, shaders are made up of three main functions: ``vertex()``,
     enabled in the Project Settings. It's enabled by default on mobile
     platforms.
 
+.. note::
+
+   Godot also exposes an API for users to write totally custom GLSL shaders. For
+   more information see :ref:`doc_compute_shaders`.
+
 Shader types
 ------------
 
 Instead of supplying a general-purpose configuration for all uses (2D, 3D,
-particles), you must specify the type of shader you're writing. Different types
-support different render modes, built-in variables, and processing functions.
+particles, sky, fog), you must specify the type of shader you're writing.
+Different types support different render modes, built-in variables, and
+processing functions.
 
 In Godot, all shaders need to specify their type in the first line, like so:
 
@@ -88,6 +116,7 @@ Here are the available types:
 * :ref:`canvas_item <doc_canvas_item_shader>` for 2D rendering.
 * :ref:`particles <doc_particle_shader>` for particle systems.
 * :ref:`sky <doc_sky_shader>` to render :ref:`Skies <class_Sky>`.
+* :ref:`fog <doc_fog_shader>` to render :ref:`FogVolumes <class_FogVolume>`
 
 Render modes
 ------------
@@ -106,20 +135,11 @@ Render modes alter the way Godot applies the shader. For example, the
 Each shader type has different render modes. See the reference for each shader
 type for a complete list of render modes.
 
-Processor functions
--------------------
-
-Depending on the shader type, you can override different processor functions.
-For ``spatial`` and ``canvas_item``, you have access to ``vertex()``,
-``fragment()``, and ``light()``. For ``particles``, you only have access to
-``vertex()``. For ''sky'', you only have access to ''fragment()''.
-
 Vertex processor
-^^^^^^^^^^^^^^^^
+~~~~~~~~~~~~~~~~
 
 The ``vertex()`` processing function is called once for every vertex in
-``spatial`` and ``canvas_item`` shaders. For ``particles`` shaders, it is called
-once for every particle.
+``spatial`` and ``canvas_item`` shaders.
 
 Each vertex in your world's geometry has properties like a position and color.
 The function modifies those values and passes them to the fragment function. You
@@ -131,7 +151,7 @@ data yourself; see the :ref:`Spatial shader doc <doc_spatial_shader>` for an
 example.
 
 Fragment processor
-^^^^^^^^^^^^^^^^^^
+~~~~~~~~~~~~~~~~~~
 
 The ``fragment()`` processing function is used to set up the Godot material
 parameters per pixel. This code runs on every visible pixel the object or
@@ -150,7 +170,7 @@ code out. Therefore, you will not waste calculations on the effects that you do
 not use.
 
 Light processor
-^^^^^^^^^^^^^^^
+~~~~~~~~~~~~~~~
 
 The ``light()`` processor runs per pixel too, and it runs once for every light
 that affects the object. It does not run if no lights affect the object. It
